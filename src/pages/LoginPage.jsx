@@ -1,0 +1,122 @@
+import React, { useState } from 'react'
+import {Link, useNavigate} from 'react-router-dom'
+import api from '../lib/axios';
+import toast from 'react-hot-toast';
+import { TriangleAlert } from 'lucide-react';
+
+const LoginPage = () => {
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
+
+  const navigate = useNavigate();
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setError(null);
+    setLoading(true);
+
+    try{
+      const response = await api.post('/auth/LogIn', {
+        email,
+        password,
+      });
+
+      if(response.data){
+        localStorage.setItem('userInfo', JSON.stringify(response.data));
+      }
+
+      setLoading(false);
+      navigate('/SaveInfo.com');
+      toast.success("Logged in successfully!");
+      //window.location.reload();
+    } catch (error){
+      setLoading(false);
+      setError(error.response?.data?.message || 'Login failed');
+      if(error.response.status === 429){
+        toast.error("Slow down! Rate limit reached try again later.",{
+          duration: 4000,
+        });
+      } else {
+        toast.error('Login failed');
+      }
+    }
+  };
+
+  return (
+    <div className="flex justify-center items-center min-h-screen bg-gray-800 p-6">
+      <div className="w-full max-w-2xl md:max-w-3xl lg:max-w-4xl xl:max-w-5xl border border-gray-700 p-10 md:p-14 shadow-2xl space-y-8 bg-gray-800 rounded-2xl">
+        
+        {/* Heading */}
+        <h1 className="text-4xl md:text-5xl font-extrabold text-center text-white">
+          Login to Your Account
+        </h1>
+
+        <form onSubmit={handleSubmit} className='grid grid-cols-1 md:grid-cols-2 gap-8'>
+          {error && (
+            <div className="col-span-full flex items-center p-3 text-sm text-red-200 bg-red-800 rounded-md">
+              <TriangleAlert className="size-6 mr-2" />
+              {error}
+            </div>
+          )}
+
+
+          {/* Email */}
+          <div className="col-span-full md:col-span-1">
+            <label htmlFor="email" className="block text-lg font-medium text-gray-300">
+              Email Address
+            </label>
+            <input
+              id="email"
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              required
+              className="w-full p-3 mt-1 text-gray-200 bg-gray-800 border border-gray-700 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+          </div>
+
+          {/* Password */}
+          <div className="col-span-full md:col-span-1">
+            <label htmlFor="password" className="block text-lg font-medium text-gray-300">
+              Password
+            </label>
+            <input
+              id="password"
+              type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              required
+              className="w-full p-3 mt-1 text-gray-200 bg-gray-800 border border-gray-700 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+          </div>
+
+          {/* Submit Button */}
+          <div className="col-span-full">
+            <button
+              type="submit"
+              disabled={loading}
+              className="w-full p-3 text-lg font-semibold text-white bg-blue-600 rounded-md disabled:bg-gray-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all duration-300"
+            >
+              {loading ? 'Logging In...' : 'Log In'}
+            </button>
+          </div>
+        </form>
+
+        {/* Login Link */}
+        <p className="text-md text-center text-gray-400">
+          Don't have an account?{" "}
+          <Link
+            to="/SaveInfo.com/auth/signup"
+            className="font-medium text-blue-400 hover:underline hover:text-blue-300"
+          >
+            Sign Up
+          </Link>
+        </p>
+      </div>
+    </div>
+  )
+}
+
+export default LoginPage;
